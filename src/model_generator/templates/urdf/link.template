@@ -7,7 +7,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="template_mesh_file" />
+        <mesh filename="template_mesh_file" scale="template_scale"/>
       </geometry>
       <material name="">
         <color rgba="template_mesh_color" />

@@ -3,7 +3,7 @@
 <package format="3">
   <name>model_generator</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>robot model generator</description>
   <maintainer email="179547526@qq.com">lizhen</maintainer>
   <license>Apache-2.0</license>
 
@@ -15,6 +15,7 @@
   <exec_depend>tf2_geometry_msgs</exec_depend>
   <exec_depend>tf_transformations</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
 
 
   <test_depend>ament_copyright</test_depend>

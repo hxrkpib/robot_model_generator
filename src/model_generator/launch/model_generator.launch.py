@@ -1,30 +1,31 @@
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import os
 from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
+    package_share_directory = get_package_share_directory('model_generator')
 
-    urdf_path = '/home/lizhen/works/open_source/robot_model_generator/generator/model_generate/output/output.urdf'  # 修改为您的URDF文件名
-
-    if not os.path.exists(urdf_path):
-        raise FileNotFoundError(f"URDF 文件不存在: {urdf_path}")
-
-    with open(urdf_path, 'r') as urdf_file:
-        robot_description_content = urdf_file.read()
+    robot_description_content = '<robot name="empty"><link name="base_link"></link></robot>'
 
     rviz_config_file = os.path.join(
         package_share_directory, 'rviz', 'default.rviz')
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'data_path',
+            default_value='',  # 设置默认值
+        ),
 
         Node(
             package='model_generator',
             executable='model_generator',
             name='model_generator',
             output='screen',
-
+            parameters=[{'data_path': LaunchConfiguration('data_path')}],
         ),
 
         Node(

@@ -1,0 +1,70 @@
+<robot name="raise_a2_t2d0">
+    <link name="base_link">
+    <inertial>
+      <origin xyz="-0.07245655 -0.00043996 0.16664738" rpy="0 0 0" />
+      <mass value="17.71410976" />
+      <inertia ixx="0.56785982" iyy="0.52650076" izz="0.17272833" ixy="0.00042996" ixz="0.00807567" iyz="-0.00000077"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file:///home/lizhen/works/code/mc_code_dev/model/0918/robot_model/resource/meshes/raise_a2_t2d0/body.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.8 0.4 0 1" />
+      </material>
+    </visual>
+</link>
+
+<link name="left_hip_roll">
+    <inertial>
+      <origin xyz="0.00011252 0.02130615 -0.07465143" rpy="0 0 0" />
+      <mass value="2.39059365" />
+      <inertia ixx="0.00381223" iyy="0.00368166" izz="0.00334373" ixy="-0.00000253" ixz="0.00000433" iyz="0.00019809"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file:///home/lizhen/works/code/mc_code_dev/model/0918/robot_model/resource/meshes/raise_a2_t2d0/left_leg_hip_roll.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 0.4 0.4 1" />
+      </material>
+    </visual>
+</link>
+
+<joint name="idx01_left_hip_roll" type="revolute">
+    <origin xyz="-0.0808 0.105 -0.0652" rpy="0.7854 0 1.5708" />
+    <parent link="base_link" />
+    <child link="left_hip_roll" />
+    <axis xyz="0 0 1" />
+    <limit lower="-0.698" upper="0.698" effort="120" velocity="12" />
+</joint>
+
+<!-- <link name="left_hip_yaw">
+    <inertial>
+      <origin xyz="-0.00012288 0.01576460 0.10828703" rpy="0 0 0" />
+      <mass value="3.79911511" />
+      <inertia ixx="0.00941292" iyy="0.01442888" izz="0.00698406" ixy="0.00000766" ixz="0.00000238" iyz="-0.00055185"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="file:///home/lizhen/works/code/mc_code_dev/model/0918/robot_model/resource/meshes/raise_a2_t2d0/left_leg_hip_yaw.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 0.4 1" />
+      </material>
+    </visual>
+</link>
+
+<joint name="idx02_left_hip_yaw" type="revolute">
+    <origin xyz="0 -0.017 -0.0682" rpy="1.5708 -1.5708 0" />
+    <parent link="left_hip_roll" />
+    <child link="left_hip_yaw" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.57" upper="1.57" effort="120" velocity="12" />
+</joint> -->
+
+<!-- urdf auto generate tool -->
+</robot>

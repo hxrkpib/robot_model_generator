@@ -1,0 +1,18 @@
+<link name="template_link_name">
+    <inertial>
+      <origin xyz="template_link_com" rpy="0 0 0" />
+      <mass value="template_link_mass" />
+      <inertia ixx="template_ixx" iyy="template_iyy" izz="template_izz" ixy="template_ixy" ixz="template_ixz" iyz="template_iyz"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="template_mesh_file" />
+      </geometry>
+      <material name="">
+        <color rgba="template_mesh_color" />
+      </material>
+    </visual>
+</link>
+
+<!-- urdf auto generate tool -->

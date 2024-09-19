@@ -1,0 +1,9 @@
+<joint name="template_joint_name" type="template_joint_type">
+    <origin xyz="template_joint_xyz" rpy="template_joint_rpy" />
+    <parent link="template_parent_link" />
+    <child link="template_child_link" />
+    <axis xyz="template_joint_axis" />
+    <limit lower="template_joint_lower_limit" upper="template_joint_upper_limit" effort="template_joint_effort" velocity="template_joint_velocity" />
+</joint>
+
+<!-- urdf auto generate tool -->

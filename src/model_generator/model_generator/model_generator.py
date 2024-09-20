@@ -361,9 +361,9 @@ class XMLGenerator:
                                 f'{joint_index:02}'+"_"+str(link_name)
                             joint_trans = str(
                                 coe_x*float(df.iloc[i+7, 2]))+" "+str(coe_y*float(df.iloc[i+7, 3]))+" "+str(coe_z*float(df.iloc[i+7, 4]))
-                            joint_rpy = str(df.iloc[i+8, 2])+" " + \
-                                str(df.iloc[i+8, 3]) + \
-                                " "+str(df.iloc[i+8, 4])
+                            joint_rpy = str(-coe_x*float(df.iloc[i+8, 2]))+" " + \
+                                str(-coe_y*float(df.iloc[i+8, 3])) + \
+                                " "+str(-coe_z*float(df.iloc[i+8, 4]))
                             joint_axis = str(
                                 df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
                             joint_lower_limit = str(df.iloc[i+10, 2])
@@ -757,9 +757,9 @@ class URDFGenerator:
                                 f'{joint_index:02}'+"_"+str(link_name)
                             joint_trans = str(
                                 coe_x*float(df.iloc[i+7, 2]))+" "+str(coe_y*float(df.iloc[i+7, 3]))+" "+str(coe_z*float(df.iloc[i+7, 4]))
-                            joint_rpy = str(df.iloc[i+8, 2])+" " + \
-                                str(df.iloc[i+8, 3]) + \
-                                " "+str(df.iloc[i+8, 4])
+                            joint_rpy = str(-coe_x*float(df.iloc[i+8, 2]))+" " + \
+                                str(-coe_y*float(df.iloc[i+8, 3])) + \
+                                " "+str(-coe_z*float(df.iloc[i+8, 4]))
                             joint_axis = str(
                                 df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
                             joint_lower_limit = str(df.iloc[i+10, 2])

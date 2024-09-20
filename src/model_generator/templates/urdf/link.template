@@ -7,17 +7,17 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <mesh filename="template_mesh_file" scale="template_scale"/>
+        template_visual_geometry
       </geometry>
       <material name="">
         <color rgba="template_mesh_color" />
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="template_collision_mesh_file" scale="template_collision_scale"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        template_collision_geometry
+      </geometry>
     </collision>
 </link>
 

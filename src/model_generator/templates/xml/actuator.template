@@ -1,0 +1,2 @@
+<motor name = 'template_motor_name' joint = 'template_joint_name' ctrlrange = '-template_effort_limit template_effort_limit' />
+        <!-- actuator auto generate -->

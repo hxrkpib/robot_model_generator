@@ -15,10 +15,10 @@
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="file:///home/lizhen/works/open_source/robot_model_generator/src/model_generator/robot_data/meshes/body.STL" scale="1 1 1"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="file:///home/lizhen/works/open_source/robot_model_generator/src/model_generator/robot_data/meshes/body.STL" scale="1 1 1"/>
+      </geometry>
     </collision>
 </link>
 
@@ -38,14 +38,14 @@
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="" scale="1 1 1"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="" scale="1 1 1"/>
+      </geometry>
     </collision>
 </link>
 
-<joint name="idx01_left_hip_roll" type="prismatic">
+<joint name="idx01_left_hip_roll" type="revolute">
     <origin xyz="-0.0808 0.105 -0.0652" rpy="0.7854 0 1.5708" />
     <parent link="base_link" />
     <child link="left_hip_roll" />
@@ -69,10 +69,10 @@
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="" scale="1 1 1"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="" scale="1 1 1"/>
+      </geometry>
     </collision>
 </link>
 
@@ -100,14 +100,14 @@
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="" scale="-1.0 1.0 1.0"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="" scale="1 1 1"/>
+      </geometry>
     </collision>
 </link>
 
-<joint name="idx03_right_hip_roll" type="prismatic">
+<joint name="idx03_right_hip_roll" type="revolute">
     <origin xyz="-0.0808 -0.105 -0.0652" rpy="0.7854 0 1.5708" />
     <parent link="base_link" />
     <child link="right_hip_roll" />
@@ -131,10 +131,10 @@
       </material>
     </visual>
     <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <mesh filename="" scale="1.0 -1.0 1.0"/>
-          </geometry>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="" scale="1 1 1"/>
+      </geometry>
     </collision>
 </link>
 

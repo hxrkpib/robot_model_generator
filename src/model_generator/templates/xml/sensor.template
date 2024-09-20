@@ -1,0 +1,4 @@
+<jointpos name = 'template_pos_sensor_name' joint = 'template_joint_name'/>
+        <jointvel name = 'template_vel_sensor_name' joint = 'template_joint_name'/>
+        
+        <!-- sensor auto generate -->

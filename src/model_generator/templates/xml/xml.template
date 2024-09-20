@@ -27,11 +27,11 @@
     </worldbody>
 
     <actuator>
-        <!-- asset actuator generate -->
+        <!-- actuator auto generate -->
     </actuator>
 
     <sensor>
-        <!-- asset sensor generate -->
+        <!-- sensor auto generate -->
     </sensor>
     <!--
     <equality>

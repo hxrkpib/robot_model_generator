@@ -19,7 +19,7 @@ link_color_list = ["1 0.4 0.4 1", "1 1 0.4 1",
 
 
 class XMLGenerator:
-    def __init__(self, output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path):
+    def __init__(self, output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path):
         self.xml_output_file = output_file_path
         self.data_excel_file_path = data_file_path
         self.mesh_folder = mesh_folder_path
@@ -29,6 +29,8 @@ class XMLGenerator:
         self.asset_template_file = asset_template_file_path
         self.visual_geom_template_file = visual_geom_template_file_path
         self.collision_geom_template_file = collision_geom_template_file_path
+        self.actuator_template_file = actuator_template_file_path
+        self.sensor_template_file = sensor_template_file_path
 
     def add_spaces_to_string(self, text, num_spaces):
         # 生成指定数量的空格
@@ -67,6 +69,19 @@ class XMLGenerator:
                     ' '+str(df.iloc[6, 4])
                 link_mesh = str(df.iloc[8, 1])
                 collision_mesh = str(df.iloc[9, 1])
+                link_geom = ''
+                collision_geom = ''
+
+                if ':' in link_mesh:
+                    parts = link_mesh.split(':', 1)
+                    link_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                elif '.' in link_mesh:
+                    link_geom = f"type = 'mesh' mesh = '{base_name}_mesh_visual'"
+                if ':' in collision_mesh:
+                    parts = collision_mesh.split(':', 1)
+                    collision_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                elif '.' in collision_mesh:
+                    collision_geom = f"type = 'mesh' mesh = '{base_name}_mesh_collision'"
                 if str(df.iloc[9, 1]) == "" or str(df.iloc[9, 1]) == "nan" or str(df.iloc[9, 1]) == "-":
                     collision_mesh = ""
                 with open(self.xml_template_file, 'r', encoding='utf-8') as file:
@@ -77,20 +92,28 @@ class XMLGenerator:
                         'template_base_link_name', base_name)
                     xml_text = xml_text.replace(
                         'template_mesh_path', self.mesh_folder)
-                with open(self.asset_template_file, 'r', encoding='utf-8') as file:
-                    asset_text = file.read()
-                    asset_text = asset_text.replace(
-                        'template_mesh_name', base_name+'_mesh_visual')
-                    asset_text = asset_text.replace(
-                        'template_mesh_file_path', link_mesh)
-                    asset_text = asset_text.replace(
-                        'template_mesh_scale', '1 1 1')
-                    xml_text = xml_text.replace(
-                        '<!-- asset auto generate -->', asset_text)
-                    asset_text = asset_text.replace(
-                        base_name+'_mesh_visual', base_name+'_mesh_collision')
-                    xml_text = xml_text.replace(
-                        '<!-- asset auto generate -->', asset_text)
+                if not ':' in link_mesh:
+                    with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                        asset_text = file.read()
+                        asset_text = asset_text.replace(
+                            'template_mesh_name', base_name+'_mesh_visual')
+                        asset_text = asset_text.replace(
+                            'template_mesh_file_path', link_mesh)
+                        asset_text = asset_text.replace(
+                            'template_mesh_scale', '1 1 1')
+                        xml_text = xml_text.replace(
+                            '<!-- asset auto generate -->', asset_text)
+                if not ':' in collision_mesh:
+                    with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                        asset_text = file.read()
+                        asset_text = asset_text.replace(
+                            'template_mesh_name', base_name+'_mesh_collision')
+                        asset_text = asset_text.replace(
+                            'template_mesh_file_path', collision_mesh)
+                        asset_text = asset_text.replace(
+                            'template_mesh_scale', '1 1 1')
+                        xml_text = xml_text.replace(
+                            '<!-- asset auto generate -->', asset_text)
                 with open(self.body_template_file, 'r', encoding='utf-8') as file:
                     body_text = file.read()
                     body_text = body_text.replace(
@@ -114,7 +137,7 @@ class XMLGenerator:
                 with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
                     mesh_text = file.read()
                     mesh_text = mesh_text.replace(
-                        'template_geom_mesh', base_name+'_mesh_visual')
+                        'template_geom_mesh', link_geom)
                     mesh_text = mesh_text.replace(
                         'template_geom_color', base_color)
                     xml_text = xml_text.replace(
@@ -122,7 +145,7 @@ class XMLGenerator:
                 with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
                     mesh_text = file.read()
                     mesh_text = mesh_text.replace(
-                        'template_collision_geom_mesh', base_name+'_mesh_collision')
+                        'template_geom_mesh', collision_geom)
                     xml_text = xml_text.replace(
                         f'<!-- {base_name} collision geom -->', mesh_text)
             else:
@@ -172,10 +195,23 @@ class XMLGenerator:
                             joint_type = 'slide'
                             limit = 'true'
                         elif joint_type == 'ball':
-                            joint_type = 'slide'
                             limit = 'false'
                         link_mesh = str(df.iloc[i+16, 1])
                         collision_mesh = str(df.iloc[i+17, 1])
+                        link_geom = ''
+                        collision_geom = ''
+
+                        if ':' in link_mesh:
+                            parts = link_mesh.split(':', 1)
+                            link_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                        elif '.' in link_mesh:
+                            link_geom = f"type = 'mesh' mesh = '{link_name}_mesh_visual'"
+                        if ':' in collision_mesh:
+                            parts = collision_mesh.split(':', 1)
+                            collision_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                        elif '.' in collision_mesh:
+                            collision_geom = f"type = 'mesh' mesh = '{link_name}_mesh_collision'"
+
                         if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
                             collision_mesh = ""
                         with open(self.body_template_file, 'r', encoding='utf-8') as file:
@@ -198,26 +234,29 @@ class XMLGenerator:
                                 '<!-- template_parent_body_name child body -->', f'<!-- {parent_link} child body -->')
                             xml_text = xml_text.replace(
                                 f'<!-- {parent_link} child body -->', self.add_spaces_to_string(body_text, space_dict[link_name]))
-                        with open(self.asset_template_file, 'r', encoding='utf-8') as file:
-                            asset_text = file.read()
-                            asset_text = asset_text.replace(
-                                'template_mesh_name', link_name+'_mesh_visual')
-                            asset_text = asset_text.replace(
-                                'template_mesh_file_path', link_mesh)
-                            asset_text = asset_text.replace(
-                                'template_mesh_scale', '1 1 1')
-                            xml_text = xml_text.replace(
-                                '<!-- asset auto generate -->', asset_text)
-                            if not collision_mesh == '':
+                        if not ':' in link_mesh:
+                            with open(self.asset_template_file, 'r', encoding='utf-8') as file:
                                 asset_text = file.read()
                                 asset_text = asset_text.replace(
-                                    'template_mesh_name', link_name+'_mesh_collision')
+                                    'template_mesh_name', link_name+'_mesh_visual')
                                 asset_text = asset_text.replace(
-                                    'template_mesh_file_path', collision_mesh)
+                                    'template_mesh_file_path', link_mesh)
                                 asset_text = asset_text.replace(
                                     'template_mesh_scale', '1 1 1')
                                 xml_text = xml_text.replace(
                                     '<!-- asset auto generate -->', asset_text)
+                        if not ':' in collision_mesh:
+                            with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                                if not collision_mesh == '':
+                                    asset_text = file.read()
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_name', link_name+'_mesh_collision')
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_file_path', collision_mesh)
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_scale', '1 1 1')
+                                    xml_text = xml_text.replace(
+                                        '<!-- asset auto generate -->', asset_text)
                         if not joint_type == 'fixed':
                             with open(self.joint_template_file, 'r', encoding='utf-8') as file:
                                 joint_text = file.read()
@@ -238,7 +277,7 @@ class XMLGenerator:
                         with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
                             geom_text = file.read()
                             geom_text = geom_text.replace(
-                                'template_geom_mesh', link_name+'_mesh_visual')
+                                'template_geom_mesh', link_geom)
                             geom_text = geom_text.replace(
                                 'template_geom_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                             xml_text = xml_text.replace(
@@ -247,9 +286,32 @@ class XMLGenerator:
                             with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
                                 geom_text = file.read()
                                 geom_text = geom_text.replace(
-                                    'template_collision_geom_mesh', link_name+'_mesh_collision')
+                                    'template_geom_mesh', collision_geom)
                                 xml_text = xml_text.replace(
                                     f'<!-- {link_name} collision geom -->', geom_text)
+                        if joint_type == "hinge" or joint_type == "slide":
+                            with open(self.actuator_template_file, 'r', encoding='utf-8') as file:
+                                actuator_text = file.read()
+                                actuator_text = actuator_text.replace(
+                                    'template_motor_name', 'motor_'+joint_name)
+                                actuator_text = actuator_text.replace(
+                                    'template_joint_name', joint_name)
+                                actuator_text = actuator_text.replace(
+                                    'template_effort_limit', joint_effort)
+                                xml_text = xml_text.replace(
+                                    '<!-- actuator auto generate -->', actuator_text)
+
+                            with open(self.sensor_template_file, 'r', encoding='utf-8') as file:
+                                sensor_text = file.read()
+                                sensor_text = sensor_text.replace(
+                                    'template_pos_sensor_name', 'jointpos_'+joint_name)
+                                sensor_text = sensor_text.replace(
+                                    'template_vel_sensor_name', 'jointvel_'+joint_name)
+                                sensor_text = sensor_text.replace(
+                                    'template_joint_name', joint_name)
+                                xml_text = xml_text.replace(
+                                    '<!-- sensor auto generate -->', sensor_text)
+
                 # 处理镜像
                 is_mirror = str(df.iloc[0, 1])
                 mirror_name = str(df.iloc[1, 1])
@@ -307,8 +369,8 @@ class XMLGenerator:
                             joint_lower_limit = str(df.iloc[i+10, 2])
                             joint_upper_limit = str(df.iloc[i+11, 2])
                             if mirror_axis == 'Z':
-                                joint_lower_limit = str(df.iloc[i+11, 2])
-                                joint_upper_limit = str(df.iloc[i+10, 2])
+                                joint_lower_limit = -str(df.iloc[i+11, 2])
+                                joint_upper_limit = -str(df.iloc[i+10, 2])
                             joint_velocity = str(df.iloc[i+12, 2])
                             joint_effort = str(df.iloc[i+13, 2])
                             parent_link = str(df.iloc[i+14, 1])
@@ -336,6 +398,16 @@ class XMLGenerator:
                                 limit = 'false'
                             link_mesh = str(df.iloc[i+16, 1])
                             collision_mesh = str(df.iloc[i+17, 1])
+                            if ':' in link_mesh:
+                                parts = link_mesh.split(':', 1)
+                                link_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                            elif '.' in link_mesh:
+                                link_geom = f"type = 'mesh' mesh = '{link_name}_mesh_visual'"
+                            if ':' in collision_mesh:
+                                parts = collision_mesh.split(':', 1)
+                                collision_geom = f"type = '{parts[0]}' size = '{parts[1]}'"
+                            elif '.' in collision_mesh:
+                                collision_geom = f"type = 'mesh' mesh = '{link_name}_mesh_collision'"
                             if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
                                 collision_mesh = ""
                             with open(self.body_template_file, 'r', encoding='utf-8') as file:
@@ -358,26 +430,29 @@ class XMLGenerator:
                                     '<!-- template_parent_body_name child body -->', f'<!-- {parent_link} child body -->')
                                 xml_text = xml_text.replace(
                                     f'<!-- {parent_link} child body -->', self.add_spaces_to_string(body_text, space_dict[link_name]))
-                            with open(self.asset_template_file, 'r', encoding='utf-8') as file:
-                                asset_text = file.read()
-                                asset_text = asset_text.replace(
-                                    'template_mesh_name', link_name+'_mesh_visual')
-                                asset_text = asset_text.replace(
-                                    'template_mesh_file_path', link_mesh)
-                                asset_text = asset_text.replace(
-                                    'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
-                                xml_text = xml_text.replace(
-                                    '<!-- asset auto generate -->', asset_text)
-                                if not collision_mesh == '':
+                            if not ':' in link_mesh:
+                                with open(self.asset_template_file, 'r', encoding='utf-8') as file:
                                     asset_text = file.read()
                                     asset_text = asset_text.replace(
-                                        'template_mesh_name', link_name+'_mesh_collision')
+                                        'template_mesh_name', link_name+'_mesh_visual')
                                     asset_text = asset_text.replace(
-                                        'template_mesh_file_path', collision_mesh)
+                                        'template_mesh_file_path', link_mesh)
                                     asset_text = asset_text.replace(
                                         'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
                                     xml_text = xml_text.replace(
                                         '<!-- asset auto generate -->', asset_text)
+                            if not ':' in collision_mesh:
+                                with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                                    if not collision_mesh == '':
+                                        asset_text = file.read()
+                                        asset_text = asset_text.replace(
+                                            'template_mesh_name', link_name+'_mesh_collision')
+                                        asset_text = asset_text.replace(
+                                            'template_mesh_file_path', collision_mesh)
+                                        asset_text = asset_text.replace(
+                                            'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                        xml_text = xml_text.replace(
+                                            '<!-- asset auto generate -->', asset_text)
                             if not joint_type == 'fixed':
                                 with open(self.joint_template_file, 'r', encoding='utf-8') as file:
                                     joint_text = file.read()
@@ -398,7 +473,7 @@ class XMLGenerator:
                             with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
                                 geom_text = file.read()
                                 geom_text = geom_text.replace(
-                                    'template_geom_mesh', link_name+'_mesh_visual')
+                                    'template_geom_mesh', link_geom)
                                 geom_text = geom_text.replace(
                                     'template_geom_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                                 xml_text = xml_text.replace(
@@ -407,9 +482,31 @@ class XMLGenerator:
                                 with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
                                     geom_text = file.read()
                                     geom_text = geom_text.replace(
-                                        'template_collision_geom_mesh', link_name+'_mesh_collision')
+                                        'template_geom_mesh', collision_geom)
                                     xml_text = xml_text.replace(
                                         f'<!-- {link_name} collision geom -->', geom_text)
+                            if joint_type == "hinge" or joint_type == "slide":
+                                with open(self.actuator_template_file, 'r', encoding='utf-8') as file:
+                                    actuator_text = file.read()
+                                    actuator_text = actuator_text.replace(
+                                        'template_motor_name', 'motor_'+joint_name)
+                                    actuator_text = actuator_text.replace(
+                                        'template_joint_name', joint_name)
+                                    actuator_text = actuator_text.replace(
+                                        'template_effort_limit', joint_effort)
+                                    xml_text = xml_text.replace(
+                                        '<!-- actuator auto generate -->', actuator_text)
+
+                                with open(self.sensor_template_file, 'r', encoding='utf-8') as file:
+                                    sensor_text = file.read()
+                                    sensor_text = sensor_text.replace(
+                                        'template_pos_sensor_name', 'jointpos_'+joint_name)
+                                    sensor_text = sensor_text.replace(
+                                        'template_vel_sensor_name', 'jointvel_'+joint_name)
+                                    sensor_text = sensor_text.replace(
+                                        'template_joint_name', joint_name)
+                                    xml_text = xml_text.replace(
+                                        '<!-- sensor auto generate -->', sensor_text)
 
         directory = os.path.dirname(self.xml_output_file)
         if not os.path.exists(directory):
@@ -452,11 +549,27 @@ class URDFGenerator:
                 ixy = str(df.iloc[5, 3])
                 ixz = str(df.iloc[5, 4])
                 iyz = str(df.iloc[6, 4])
-                link_mesh = "file://"+self.mesh_folder+str(df.iloc[8, 1])
-                collision_mesh = "file://" + \
-                    self.mesh_folder+str(df.iloc[9, 1])
+                link_mesh = ""
+                collision_mesh = ""
+                if ':' in str(df.iloc[8, 1]):
+                    parts = str(df.iloc[8, 1]).split(':', 1)
+                    if parts[0] == 'sphere':
+                        link_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                    else:
+                        link_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                elif '.' in str(df.iloc[8, 1]):
+                    link_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[8, 1])}" scale="1 1 1"/>'
+                if ':' in str(df.iloc[9, 1]):
+                    parts = str(df.iloc[9, 1]).split(':', 1)
+                    if parts[0] == 'sphere':
+                        collision_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                    else:
+                        collision_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                elif '.' in str(df.iloc[9, 1]):
+                    collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[9, 1])}" scale="1 1 1"/>'
+
                 if str(df.iloc[9, 1]) == "" or str(df.iloc[9, 1]) == "nan" or str(df.iloc[9, 1]) == "-":
-                    collision_mesh = ""
+                    collision_mesh = '<mesh filename="" scale="1 1 1"/>'
                 with open(self.urdf_template_file, 'r', encoding='utf-8') as file:
                     urdf_text = file.read()
                     urdf_text = urdf_text.replace(
@@ -473,12 +586,10 @@ class URDFGenerator:
                     text = text.replace('template_ixy', ixy)
                     text = text.replace('template_ixz', ixz)
                     text = text.replace('template_iyz', iyz)
-                    text = text.replace('template_mesh_file', link_mesh)
+                    text = text.replace('template_visual_geometry', link_mesh)
                     text = text.replace(
-                        'template_collision_mesh_file', collision_mesh)
+                        'template_collision_geometry', collision_mesh)
                     text = text.replace('template_mesh_color', base_color)
-                    text = text.replace('template_scale', '1 1 1')
-                    text = text.replace('template_collision_scale', '1 1 1')
                 urdf_text = urdf_text.replace(
                     '<!-- urdf auto generate tool -->', text)
                 # print(urdf_text)
@@ -523,12 +634,28 @@ class URDFGenerator:
                         joint_type = str(df.iloc[i+15, 1])
                         if joint_type == 'ball':
                             joint_type = 'fixed'
-                        link_mesh = "file://" + \
-                            self.mesh_folder+str(df.iloc[i+16, 1])
-                        collision_mesh = "file://" + \
-                            self.mesh_folder+str(df.iloc[i+17, 1])
+
+                        link_mesh = ""
+                        collision_mesh = ""
+                        if ':' in str(df.iloc[i+16, 1]):
+                            parts = str(df.iloc[i+16, 1]).split(':', 1)
+                            if parts[0] == 'sphere':
+                                link_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                            else:
+                                link_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                        elif '.' in str(df.iloc[i+16, 1]):
+                            link_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+16, 1])}" scale="1 1 1"/>'
+                        if ':' in str(df.iloc[i+17, 1]):
+                            parts = str(df.iloc[i+17, 1]).split(':', 1)
+                            if parts[0] == 'sphere':
+                                collision_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                            else:
+                                collision_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                        elif '.' in str(df.iloc[i+17, 1]):
+                            collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="1 1 1"/>'
+
                         if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
-                            collision_mesh = ""
+                            collision_mesh = '<mesh filename="" scale="1 1 1"/>'
                         with open(self.link_template_file, 'r', encoding='utf-8') as file:
                             text = file.read()
                             text = text.replace(
@@ -542,14 +669,11 @@ class URDFGenerator:
                             text = text.replace('template_ixz', ixz)
                             text = text.replace('template_iyz', iyz)
                             text = text.replace(
-                                'template_mesh_file', link_mesh)
+                                'template_visual_geometry', link_mesh)
                             text = text.replace(
-                                'template_collision_mesh_file', collision_mesh)
+                                'template_collision_geometry', collision_mesh)
                             text = text.replace(
                                 'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
-                            text = text.replace('template_scale', '1 1 1')
-                            text = text.replace(
-                                'template_collision_scale', '1 1 1')
                             urdf_text = urdf_text.replace(
                                 '<!-- urdf auto generate tool -->', text)
                             # print(urdf_text)
@@ -641,8 +765,8 @@ class URDFGenerator:
                             joint_lower_limit = str(df.iloc[i+10, 2])
                             joint_upper_limit = str(df.iloc[i+11, 2])
                             if mirror_axis == 'Z':
-                                joint_lower_limit = str(df.iloc[i+11, 2])
-                                joint_upper_limit = str(df.iloc[i+10, 2])
+                                joint_lower_limit = -str(df.iloc[i+11, 2])
+                                joint_upper_limit = -str(df.iloc[i+10, 2])
                             joint_velocity = str(df.iloc[i+12, 2])
                             joint_effort = str(df.iloc[i+13, 2])
                             parent_link = str(df.iloc[i+14, 1])
@@ -656,12 +780,27 @@ class URDFGenerator:
                             joint_type = str(df.iloc[i+15, 1])
                             if joint_type == 'ball':
                                 joint_type = 'fixed'
-                            link_mesh = "file://" + \
-                                self.mesh_folder+str(df.iloc[i+16, 1])
-                            collision_mesh = "file://" + \
-                                self.mesh_folder+str(df.iloc[i+17, 1])
+                            link_mesh = ""
+                            collision_mesh = ""
+                            if ':' in str(df.iloc[i+16, 1]):
+                                parts = str(df.iloc[i+16, 1]).split(':', 1)
+                                if parts[0] == 'sphere':
+                                    link_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                                else:
+                                    link_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                            elif '.' in str(df.iloc[i+16, 1]):
+                                link_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+16, 1])}" scale="{str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z)}"/>'
+                            if ':' in str(df.iloc[i+17, 1]):
+                                parts = str(df.iloc[i+17, 1]).split(':', 1)
+                                if parts[0] == 'sphere':
+                                    collision_mesh = f'<{parts[0]} radius="{parts[1]}" />'
+                                else:
+                                    collision_mesh = f'<{parts[0]} size="{parts[1]}" />'
+                            elif '.' in str(df.iloc[i+17, 1]):
+                                collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="{str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z)}"/>'
+
                             if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
-                                collision_mesh = ""
+                                collision_mesh = '<mesh filename="" scale="1 1 1"/>'
                             with open(self.link_template_file, 'r', encoding='utf-8') as file:
                                 text = file.read()
                                 text = text.replace(
@@ -675,15 +814,11 @@ class URDFGenerator:
                                 text = text.replace('template_ixz', ixz)
                                 text = text.replace('template_iyz', iyz)
                                 text = text.replace(
-                                    'template_mesh_file', link_mesh)
+                                    'template_visual_geometry', link_mesh)
                                 text = text.replace(
-                                    'template_collision_mesh_file', collision_mesh)
+                                    'template_collision_geometry', collision_mesh)
                                 text = text.replace(
                                     'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
-                                text = text.replace('template_scale', str(
-                                    stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
-                                text = text.replace('template_collision_scale', str(
-                                    stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
                                 urdf_text = urdf_text.replace(
                                     '<!-- urdf auto generate tool -->', text)
                                 # print(urdf_text)
@@ -775,12 +910,16 @@ class URDFGeneratorNode(Node):
             "/templates/xml/visual_geom.template"
         collision_geom_template_file_path = package_share_directory + \
             "/templates/xml/collision_geom.template"
+        actuator_template_file_path = package_share_directory + \
+            "/templates/xml/actuator.template"
+        sensor_template_file_path = package_share_directory + \
+            "/templates/xml/sensor.template"
 
         self.urdf_generator = URDFGenerator(data_file_path, mesh_folder_path, urdf_output_file_path,
                                             urdf_template_file_path, link_template_file_path, joint_template_file_path)
         self.urdf_generator.urdf_generator()
         self.xml_generator = XMLGenerator(
-            xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path)
+            xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path)
         self.xml_generator.xml_generator()
 
         self.urdf_path = urdf_output_file_path

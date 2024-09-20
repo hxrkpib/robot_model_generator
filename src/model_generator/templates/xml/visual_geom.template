@@ -1,1 +1,1 @@
-<geom type = 'mesh' mesh = 'template_geom_mesh' pos = '0 0 0' euler = '0 0 0' rgba = "template_geom_color" />
+<geom template_geom_mesh pos = '0 0 0' euler = '0 0 0' rgba = "template_geom_color" />

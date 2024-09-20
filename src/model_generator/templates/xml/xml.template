@@ -1,0 +1,54 @@
+<mujoco model = "template_robot_name">
+    <compiler angle = 'radian' eulerseq = "XYZ" meshdir = "template_mesh_path" autolimits = "true" />
+
+    <option timestep = "0.001" />
+
+    <default>
+        <geom contype = "0" conaffinity = "0" solref = "0.005 1" condim = "3" friction = "1 1" />
+        <equality solref = "0.005 1" />
+        <default class = "collision">
+            <geom contype = "1" group = "3" type = "capsule" />
+            <default class = "collision-left">
+                <geom contype = "2" conaffinity = "4" />
+            </default>
+            <default class = "collision-right">
+                <geom contype = "4" conaffinity = "2" />
+            </default>
+        </default>
+    </default>
+
+    <asset>
+        <!-- asset auto generate -->
+    </asset>
+
+    <worldbody>
+        <light name = "spotlight" mode = "targetbodycom" target = "template_base_link_name" pos = "0 -1 2" />
+        <!-- world child body -->
+    </worldbody>
+
+    <actuator>
+        <!-- asset actuator generate -->
+    </actuator>
+
+    <sensor>
+        <!-- asset sensor generate -->
+    </sensor>
+    <!--
+    <equality>
+        <connect name = '' body1 = '' body2 = '' solimp = '0.9999 0.9999 0.001 0.5 2' anchor = '0 0 0' />
+    </equality>
+    -->
+    <sensor>
+        <framequat name="body-orientation" objtype="site" objname="imu"/>
+        <gyro name="body-angular-velocity" site="imu"/>
+        <framepos name="body-linear-pos" objtype="site" objname="imu"/>
+        <velocimeter name="body-linear-vel" site="imu"/>
+        <accelerometer name="body-linear-acceleration" site="imu"/>
+    </sensor>
+
+    <!--
+    <keyframe>
+        <key name = "default" qpos = "" />
+    </keyframe>
+    -->
+</mujoco>

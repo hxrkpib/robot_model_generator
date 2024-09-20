@@ -1,0 +1,9 @@
+
+<body name = 'template_body_name' pos = 'template_body_pos' euler = 'template_body_rpy'>
+    <inertial pos = "template_body_com" mass = "template_body_mass" fullinertia = "template_body_inertia" />
+    <!-- template_body_name joint -->
+    <!-- template_body_name visual geom -->
+    <!-- template_body_name collision geom -->
+    <!-- template_body_name child body -->
+</body>
+<!-- template_parent_body_name child body -->

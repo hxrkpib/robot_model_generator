@@ -18,6 +18,406 @@ link_color_list = ["1 0.4 0.4 1", "1 1 0.4 1",
                    "0.4 1 0.4 1", "0 0.5 1 1", "0.8 1.0 0.8 1", "1 0.5 1 1"]
 
 
+class XMLGenerator:
+    def __init__(self, output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path):
+        self.xml_output_file = output_file_path
+        self.data_excel_file_path = data_file_path
+        self.mesh_folder = mesh_folder_path
+        self.xml_template_file = xml_template_file_path
+        self.body_template_file = body_template_file_path
+        self.joint_template_file = joint_template_file_path
+        self.asset_template_file = asset_template_file_path
+        self.visual_geom_template_file = visual_geom_template_file_path
+        self.collision_geom_template_file = collision_geom_template_file_path
+
+    def add_spaces_to_string(self, text, num_spaces):
+        # 生成指定数量的空格
+        spaces = ' ' * num_spaces
+
+        # 将输入字符串按行分割，然后为每行添加空格
+        lines = text.splitlines()
+        modified_lines = [spaces + line for line in lines]
+
+        # 将处理后的行重新组合成一个字符串，并保留原有的换行符
+        return '\n'.join(modified_lines)
+
+    def xml_generator(self):
+        # 获取所有工作表名称
+        data_excel_file = pd.ExcelFile(
+            self.data_excel_file_path)
+        sheet_names = data_excel_file.sheet_names
+        xml_text = ''
+        joint_index = 0
+        space_dict = {}
+        # 遍历所有工作表
+        for index, sheet_name in enumerate(sheet_names):
+            df = pd.read_excel(data_excel_file, sheet_name=sheet_name,
+                               header=None, dtype=str)
+
+            if sheet_name == 'base':
+
+                robot_name = str(df.iloc[0, 1])
+                base_name = str(df.iloc[1, 1])
+                space_dict[base_name] = 8
+                com = str(df.iloc[3, 2])+" " + \
+                    str(df.iloc[3, 3])+" "+str(df.iloc[3, 4])
+                mass = str(df.iloc[4, 2])
+                inertia = str(df.iloc[5, 2])+' '+str(df.iloc[6, 3])+' '+str(df.iloc[7, 4]) + ' ' + \
+                    str(df.iloc[5, 3])+' '+str(df.iloc[5, 4]) + \
+                    ' '+str(df.iloc[6, 4])
+                link_mesh = str(df.iloc[8, 1])
+                collision_mesh = str(df.iloc[9, 1])
+                if str(df.iloc[9, 1]) == "" or str(df.iloc[9, 1]) == "nan" or str(df.iloc[9, 1]) == "-":
+                    collision_mesh = ""
+                with open(self.xml_template_file, 'r', encoding='utf-8') as file:
+                    xml_text = file.read()
+                    xml_text = xml_text.replace(
+                        'template_robot_name', robot_name)
+                    xml_text = xml_text.replace(
+                        'template_base_link_name', base_name)
+                    xml_text = xml_text.replace(
+                        'template_mesh_path', self.mesh_folder)
+                with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                    asset_text = file.read()
+                    asset_text = asset_text.replace(
+                        'template_mesh_name', base_name+'_mesh_visual')
+                    asset_text = asset_text.replace(
+                        'template_mesh_file_path', link_mesh)
+                    asset_text = asset_text.replace(
+                        'template_mesh_scale', '1 1 1')
+                    xml_text = xml_text.replace(
+                        '<!-- asset auto generate -->', asset_text)
+                    asset_text = asset_text.replace(
+                        base_name+'_mesh_visual', base_name+'_mesh_collision')
+                    xml_text = xml_text.replace(
+                        '<!-- asset auto generate -->', asset_text)
+                with open(self.body_template_file, 'r', encoding='utf-8') as file:
+                    body_text = file.read()
+                    body_text = body_text.replace(
+                        'template_body_name', base_name)
+                    body_text = body_text.replace(
+                        'template_body_pos', '0 0 0')
+                    body_text = body_text.replace(
+                        'template_body_rpy', '0 0 0')
+                    body_text = body_text.replace(
+                        'template_body_com', com)
+                    body_text = body_text.replace(
+                        'template_body_mass', mass)
+                    body_text = body_text.replace(
+                        'template_body_inertia', inertia)
+                    body_text = body_text.replace(
+                        f'<!-- {base_name} joint -->', '<freejoint />'+'\n'+'    <site name = "imu" size = "0.01" pos = "0 0 0" />')
+                    body_text = body_text.replace(
+                        '<!-- template_parent_body_name child body -->', '<!-- world child body -->')
+                    xml_text = xml_text.replace(
+                        '<!-- world child body -->', self.add_spaces_to_string(body_text, 8))
+                with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
+                    mesh_text = file.read()
+                    mesh_text = mesh_text.replace(
+                        'template_geom_mesh', base_name+'_mesh_visual')
+                    mesh_text = mesh_text.replace(
+                        'template_geom_color', base_color)
+                    xml_text = xml_text.replace(
+                        f'<!-- {base_name} visual geom -->', mesh_text)
+                with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
+                    mesh_text = file.read()
+                    mesh_text = mesh_text.replace(
+                        'template_collision_geom_mesh', base_name+'_mesh_collision')
+                    xml_text = xml_text.replace(
+                        f'<!-- {base_name} collision geom -->', mesh_text)
+            else:
+                # print(f"正在处理工作表：{sheet_name}")
+                # 获取第一列数据
+                first_column = df.iloc[:, 0]
+
+                # 找到第一列中最后一个非空单元格的行号
+                last_valid_row = first_column.last_valid_index()
+                joint_color_index = 0
+                for i in range(last_valid_row):
+                    if df.iloc[i, 0] == 'Link Name':
+                        joint_index = joint_index+1
+                        joint_color_index = joint_color_index+1
+                        # link
+                        link_name = str(df.iloc[i, 1])
+                        com = str(df.iloc[i+2, 2])+" " + \
+                            str(df.iloc[i+2, 3])+" "+str(df.iloc[i+2, 4])
+                        mass = str(df.iloc[i+3, 2])
+                        inertia = str(df.iloc[i+4, 2])+' '+str(df.iloc[i+5, 3])+' '+str(df.iloc[i+6, 4])+' '+str(
+                            df.iloc[i+4, 3])+' '+str(df.iloc[i+4, 4])+' '+str(df.iloc[i+5, 4])
+                        # joint
+                        joint_name = "idx" + \
+                            f'{joint_index:02}'+"_"+str(link_name)
+                        joint_trans = str(
+                            df.iloc[i+7, 2])+" "+str(df.iloc[i+7, 3])+" "+str(df.iloc[i+7, 4])
+                        joint_rpy = str(df.iloc[i+8, 2])+" " + \
+                            str(df.iloc[i+8, 3])+" "+str(df.iloc[i+8, 4])
+                        joint_axis = str(
+                            df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
+                        joint_lower_limit = str(df.iloc[i+10, 2])
+                        joint_upper_limit = str(df.iloc[i+11, 2])
+                        joint_velocity = str(df.iloc[i+12, 2])
+                        joint_effort = str(df.iloc[i+13, 2])
+                        parent_link = str(df.iloc[i+14, 1])
+                        child_link = link_name
+                        space_dict[link_name] = space_dict[parent_link]+4
+                        joint_type = str(df.iloc[i+15, 1])
+                        limit = 'true'
+                        if joint_type == 'revolute':
+                            joint_type = 'hinge'
+                            limit = 'true'
+                        elif joint_type == 'continuous':
+                            joint_type = 'hinge'
+                            limit = 'false'
+                        elif joint_type == 'prismatic':
+                            joint_type = 'slide'
+                            limit = 'true'
+                        elif joint_type == 'ball':
+                            joint_type = 'slide'
+                            limit = 'false'
+                        link_mesh = str(df.iloc[i+16, 1])
+                        collision_mesh = str(df.iloc[i+17, 1])
+                        if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
+                            collision_mesh = ""
+                        with open(self.body_template_file, 'r', encoding='utf-8') as file:
+                            body_text = file.read()
+                            body_text = body_text.replace(
+                                'template_body_name', link_name)
+                            body_text = body_text.replace(
+                                'template_body_pos', joint_trans)
+                            body_text = body_text.replace(
+                                'template_body_rpy', joint_rpy)
+                            body_text = body_text.replace(
+                                'template_body_com', com)
+                            body_text = body_text.replace(
+                                'template_body_mass', mass)
+                            body_text = body_text.replace(
+                                'template_body_inertia', inertia)
+                            body_text = body_text.replace(
+                                '<!-- template_body_name child body -->', f'<!-- {link_name} child body -->')
+                            body_text = body_text.replace(
+                                '<!-- template_parent_body_name child body -->', f'<!-- {parent_link} child body -->')
+                            xml_text = xml_text.replace(
+                                f'<!-- {parent_link} child body -->', self.add_spaces_to_string(body_text, space_dict[link_name]))
+                        with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                            asset_text = file.read()
+                            asset_text = asset_text.replace(
+                                'template_mesh_name', link_name+'_mesh_visual')
+                            asset_text = asset_text.replace(
+                                'template_mesh_file_path', link_mesh)
+                            asset_text = asset_text.replace(
+                                'template_mesh_scale', '1 1 1')
+                            xml_text = xml_text.replace(
+                                '<!-- asset auto generate -->', asset_text)
+                            if not collision_mesh == '':
+                                asset_text = file.read()
+                                asset_text = asset_text.replace(
+                                    'template_mesh_name', link_name+'_mesh_collision')
+                                asset_text = asset_text.replace(
+                                    'template_mesh_file_path', collision_mesh)
+                                asset_text = asset_text.replace(
+                                    'template_mesh_scale', '1 1 1')
+                                xml_text = xml_text.replace(
+                                    '<!-- asset auto generate -->', asset_text)
+                        if not joint_type == 'fixed':
+                            with open(self.joint_template_file, 'r', encoding='utf-8') as file:
+                                joint_text = file.read()
+                                joint_text = joint_text.replace(
+                                    'template_joint_name', joint_name)
+                                joint_text = joint_text.replace(
+                                    'template_joint_type', joint_type)
+                                joint_text = joint_text.replace(
+                                    'template_joint_axis', joint_axis)
+                                joint_text = joint_text.replace(
+                                    'template_joint_limit', limit)
+                                joint_text = joint_text.replace(
+                                    'template_joint_lower_limit', joint_lower_limit)
+                                joint_text = joint_text.replace(
+                                    'template_joint_upper_limit', joint_upper_limit)
+                                xml_text = xml_text.replace(
+                                    f'<!-- {link_name} joint -->', joint_text)
+                        with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
+                            geom_text = file.read()
+                            geom_text = geom_text.replace(
+                                'template_geom_mesh', link_name+'_mesh_visual')
+                            geom_text = geom_text.replace(
+                                'template_geom_color', link_color_list[joint_color_index % len(link_color_list) - 1])
+                            xml_text = xml_text.replace(
+                                f'<!-- {link_name} visual geom -->', geom_text)
+                        if not collision_mesh == '':
+                            with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
+                                geom_text = file.read()
+                                geom_text = geom_text.replace(
+                                    'template_collision_geom_mesh', link_name+'_mesh_collision')
+                                xml_text = xml_text.replace(
+                                    f'<!-- {link_name} collision geom -->', geom_text)
+                # 处理镜像
+                is_mirror = str(df.iloc[0, 1])
+                mirror_name = str(df.iloc[1, 1])
+                if is_mirror == "Y":
+                    joint_color_index = 0
+                    for i in range(last_valid_row):
+                        if df.iloc[i, 0] == 'Link Name':
+                            joint_index = joint_index+1
+                            joint_color_index = joint_color_index+1
+                            # link
+                            link_name = str(df.iloc[i, 1])
+                            if mirror_name == "left":
+                                link_name = link_name.replace('left', 'right')
+                            else:
+                                link_name = link_name.replace('right', 'left')
+                            coe_x = float(1)
+                            coe_y = float(1)
+                            coe_z = float(1)
+                            stl_coe_x = float(1)
+                            stl_coe_y = float(1)
+                            stl_coe_z = float(1)
+                            mirror_axis = str(df.iloc[i+18, 1])
+                            mirror_stl_axis = str(df.iloc[i+19, 1])
+                            if mirror_axis == 'X':
+                                coe_x = float(-1)
+                            if mirror_axis == 'Y':
+                                coe_y = float(-1)
+                            if mirror_axis == 'Z':
+                                coe_z = float(-1)
+                            if mirror_stl_axis == 'X':
+                                stl_coe_x = float(-1)
+                            if mirror_stl_axis == 'Y':
+                                stl_coe_y = float(-1)
+                            if mirror_stl_axis == 'Z':
+                                stl_coe_z = float(-1)
+                            com = str(stl_coe_x*float(df.iloc[i+2, 2]))+" " + \
+                                str(stl_coe_y*float(df.iloc[i+2, 3])
+                                    )+" "+str(stl_coe_z*float(df.iloc[i+2, 4]))
+                            mass = str(df.iloc[i+3, 2])
+                            inertia = str(df.iloc[i+4, 2])+' '+str(df.iloc[i+5, 3])+' '+str(df.iloc[i+6, 4])+' '+str(
+                                stl_coe_x*stl_coe_y *
+                                float(df.iloc[i+4, 3]))+' '+str(stl_coe_x*stl_coe_z *
+                                                                float(df.iloc[i+4, 4]))+' '+str(stl_coe_y*stl_coe_z *
+                                                                                                float(df.iloc[i+5, 4]))
+                            # joint
+                            joint_name = "idx" + \
+                                f'{joint_index:02}'+"_"+str(link_name)
+                            joint_trans = str(
+                                coe_x*float(df.iloc[i+7, 2]))+" "+str(coe_y*float(df.iloc[i+7, 3]))+" "+str(coe_z*float(df.iloc[i+7, 4]))
+                            joint_rpy = str(df.iloc[i+8, 2])+" " + \
+                                str(df.iloc[i+8, 3]) + \
+                                " "+str(df.iloc[i+8, 4])
+                            joint_axis = str(
+                                df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
+                            joint_lower_limit = str(df.iloc[i+10, 2])
+                            joint_upper_limit = str(df.iloc[i+11, 2])
+                            if mirror_axis == 'Z':
+                                joint_lower_limit = str(df.iloc[i+11, 2])
+                                joint_upper_limit = str(df.iloc[i+10, 2])
+                            joint_velocity = str(df.iloc[i+12, 2])
+                            joint_effort = str(df.iloc[i+13, 2])
+                            parent_link = str(df.iloc[i+14, 1])
+                            if mirror_name == "left":
+                                parent_link = parent_link.replace(
+                                    'left', 'right')
+                            else:
+                                parent_link = parent_link.replace(
+                                    'right', 'left')
+                            child_link = link_name
+                            space_dict[link_name] = space_dict[parent_link]+4
+                            joint_type = str(df.iloc[i+15, 1])
+                            limit = 'true'
+                            if joint_type == 'revolute':
+                                joint_type = 'hinge'
+                                limit = 'true'
+                            elif joint_type == 'continuous':
+                                joint_type = 'hinge'
+                                limit = 'false'
+                            elif joint_type == 'prismatic':
+                                joint_type = 'slide'
+                                limit = 'true'
+                            elif joint_type == 'ball':
+                                joint_type = 'slide'
+                                limit = 'false'
+                            link_mesh = str(df.iloc[i+16, 1])
+                            collision_mesh = str(df.iloc[i+17, 1])
+                            if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
+                                collision_mesh = ""
+                            with open(self.body_template_file, 'r', encoding='utf-8') as file:
+                                body_text = file.read()
+                                body_text = body_text.replace(
+                                    'template_body_name', link_name)
+                                body_text = body_text.replace(
+                                    'template_body_pos', joint_trans)
+                                body_text = body_text.replace(
+                                    'template_body_rpy', joint_rpy)
+                                body_text = body_text.replace(
+                                    'template_body_com', com)
+                                body_text = body_text.replace(
+                                    'template_body_mass', mass)
+                                body_text = body_text.replace(
+                                    'template_body_inertia', inertia)
+                                body_text = body_text.replace(
+                                    '<!-- template_body_name child body -->', f'<!-- {link_name} child body -->')
+                                body_text = body_text.replace(
+                                    '<!-- template_parent_body_name child body -->', f'<!-- {parent_link} child body -->')
+                                xml_text = xml_text.replace(
+                                    f'<!-- {parent_link} child body -->', self.add_spaces_to_string(body_text, space_dict[link_name]))
+                            with open(self.asset_template_file, 'r', encoding='utf-8') as file:
+                                asset_text = file.read()
+                                asset_text = asset_text.replace(
+                                    'template_mesh_name', link_name+'_mesh_visual')
+                                asset_text = asset_text.replace(
+                                    'template_mesh_file_path', link_mesh)
+                                asset_text = asset_text.replace(
+                                    'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                xml_text = xml_text.replace(
+                                    '<!-- asset auto generate -->', asset_text)
+                                if not collision_mesh == '':
+                                    asset_text = file.read()
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_name', link_name+'_mesh_collision')
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_file_path', collision_mesh)
+                                    asset_text = asset_text.replace(
+                                        'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                    xml_text = xml_text.replace(
+                                        '<!-- asset auto generate -->', asset_text)
+                            if not joint_type == 'fixed':
+                                with open(self.joint_template_file, 'r', encoding='utf-8') as file:
+                                    joint_text = file.read()
+                                    joint_text = joint_text.replace(
+                                        'template_joint_name', joint_name)
+                                    joint_text = joint_text.replace(
+                                        'template_joint_type', joint_type)
+                                    joint_text = joint_text.replace(
+                                        'template_joint_axis', joint_axis)
+                                    joint_text = joint_text.replace(
+                                        'template_joint_limit', limit)
+                                    joint_text = joint_text.replace(
+                                        'template_joint_lower_limit', joint_lower_limit)
+                                    joint_text = joint_text.replace(
+                                        'template_joint_upper_limit', joint_upper_limit)
+                                    xml_text = xml_text.replace(
+                                        f'<!-- {link_name} joint -->', joint_text)
+                            with open(self.visual_geom_template_file, 'r', encoding='utf-8') as file:
+                                geom_text = file.read()
+                                geom_text = geom_text.replace(
+                                    'template_geom_mesh', link_name+'_mesh_visual')
+                                geom_text = geom_text.replace(
+                                    'template_geom_color', link_color_list[joint_color_index % len(link_color_list) - 1])
+                                xml_text = xml_text.replace(
+                                    f'<!-- {link_name} visual geom -->', geom_text)
+                            if not collision_mesh == '':
+                                with open(self.collision_geom_template_file, 'r', encoding='utf-8') as file:
+                                    geom_text = file.read()
+                                    geom_text = geom_text.replace(
+                                        'template_collision_geom_mesh', link_name+'_mesh_collision')
+                                    xml_text = xml_text.replace(
+                                        f'<!-- {link_name} collision geom -->', geom_text)
+
+        directory = os.path.dirname(self.xml_output_file)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(self.xml_output_file, 'w') as file:
+            file.write(xml_text)
+
+
 class URDFGenerator:
     def __init__(self, data_file_path, mesh_folder_path, output_folder_path, urdf_template_file_path, link_template_file_path, joint_template_file_path):
         self.urdf_output_file = output_folder_path
@@ -26,83 +426,6 @@ class URDFGenerator:
         self.urdf_template_file = urdf_template_file_path
         self.link_template_file = link_template_file_path
         self.joint_template_file = joint_template_file_path
-
-    def mirror_euler(self, roll, pitch, yaw, mirror_plane):
-
-        # 步骤 1: 将欧拉角转换为旋转矩阵
-        def euler_to_matrix(roll, pitch, yaw):
-            Rz = np.array([
-                [np.cos(yaw), -np.sin(yaw), 0],
-                [np.sin(yaw),  np.cos(yaw), 0],
-                [0,            0,           1]
-            ])
-
-            Ry = np.array([
-                [np.cos(pitch), 0, np.sin(pitch)],
-                [0,              1, 0],
-                [-np.sin(pitch), 0, np.cos(pitch)]
-            ])
-
-            Rx = np.array([
-                [1, 0,           0],
-                [0, np.cos(roll), -np.sin(roll)],
-                [0, np.sin(roll),  np.cos(roll)]
-            ])
-
-            return Rz @ Ry @ Rx  # ZYX 顺序
-
-        # 步骤 2: 定义反射矩阵
-        def get_reflection_matrix(mirror_plane):
-            if mirror_plane.upper() == 'X':
-                # 反射 X 轴
-                return np.diag([1, -1, -1])
-            elif mirror_plane.upper() == 'Y':
-                # 反射 Y 轴
-                return np.diag([-1, 1, -1])
-            elif mirror_plane.upper() == 'Z':
-                # 反射 Z 轴
-                return np.diag([-1, -1, 1])
-            else:
-                raise ValueError(
-                    "Invalid mirror_plane. Choose from 'YZ', 'XZ', 'XY'.")
-
-        # 步骤 3: 将旋转矩阵转换回欧拉角
-        def matrix_to_euler(R):
-            if not isinstance(R, np.ndarray) or R.shape != (3, 3):
-                raise ValueError("R 必须是一个 3x3 的 NumPy 数组。")
-
-            # 检查是否存在奇异性（万向节锁）
-            if abs(R[2, 0]) != 1:
-                pitch = -np.arcsin(R[2, 0])
-                cos_pitch = np.cos(pitch)
-                yaw = np.arctan2(R[2, 1] / cos_pitch, R[2, 2] / cos_pitch)
-                roll = np.arctan2(R[1, 0] / cos_pitch, R[0, 0] / cos_pitch)
-            else:
-                # 奇异性处理
-                roll = 0  # 可以设为0
-                if R[2, 0] == -1:
-                    pitch = np.pi / 2
-                    yaw = roll + np.arctan2(R[0, 1], R[0, 2])
-                else:
-                    pitch = -np.pi / 2
-                    yaw = -roll + np.arctan2(-R[0, 1], -R[0, 2])
-
-            return roll, pitch, yaw
-
-        # 执行步骤 1
-        R = euler_to_matrix(roll, pitch, yaw)
-
-        # 执行步骤 2
-        M = get_reflection_matrix(mirror_plane)
-
-        # 应用反射
-        R_mirrored = M @ R
-
-        # 执行步骤 3
-        mirrored_roll, mirrored_pitch, mirrored_yaw = matrix_to_euler(
-            R_mirrored)
-
-        return mirrored_roll, mirrored_pitch, mirrored_yaw
 
     def urdf_generator(self):
         # 获取所有工作表名称
@@ -130,6 +453,10 @@ class URDFGenerator:
                 ixz = str(df.iloc[5, 4])
                 iyz = str(df.iloc[6, 4])
                 link_mesh = "file://"+self.mesh_folder+str(df.iloc[8, 1])
+                collision_mesh = "file://" + \
+                    self.mesh_folder+str(df.iloc[9, 1])
+                if str(df.iloc[9, 1]) == "" or str(df.iloc[9, 1]) == "nan" or str(df.iloc[9, 1]) == "-":
+                    collision_mesh = ""
                 with open(self.urdf_template_file, 'r', encoding='utf-8') as file:
                     urdf_text = file.read()
                     urdf_text = urdf_text.replace(
@@ -147,13 +474,16 @@ class URDFGenerator:
                     text = text.replace('template_ixz', ixz)
                     text = text.replace('template_iyz', iyz)
                     text = text.replace('template_mesh_file', link_mesh)
+                    text = text.replace(
+                        'template_collision_mesh_file', collision_mesh)
                     text = text.replace('template_mesh_color', base_color)
                     text = text.replace('template_scale', '1 1 1')
+                    text = text.replace('template_collision_scale', '1 1 1')
                 urdf_text = urdf_text.replace(
                     '<!-- urdf auto generate tool -->', text)
                 # print(urdf_text)
             else:
-                print(f"正在处理工作表：{sheet_name}")
+                # print(f"正在处理工作表：{sheet_name}")
                 # 获取第一列数据
                 first_column = df.iloc[:, 0]
 
@@ -195,7 +525,10 @@ class URDFGenerator:
                             joint_type = 'fixed'
                         link_mesh = "file://" + \
                             self.mesh_folder+str(df.iloc[i+16, 1])
-
+                        collision_mesh = "file://" + \
+                            self.mesh_folder+str(df.iloc[i+17, 1])
+                        if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
+                            collision_mesh = ""
                         with open(self.link_template_file, 'r', encoding='utf-8') as file:
                             text = file.read()
                             text = text.replace(
@@ -211,8 +544,12 @@ class URDFGenerator:
                             text = text.replace(
                                 'template_mesh_file', link_mesh)
                             text = text.replace(
+                                'template_collision_mesh_file', collision_mesh)
+                            text = text.replace(
                                 'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                             text = text.replace('template_scale', '1 1 1')
+                            text = text.replace(
+                                'template_collision_scale', '1 1 1')
                             urdf_text = urdf_text.replace(
                                 '<!-- urdf auto generate tool -->', text)
                             # print(urdf_text)
@@ -264,8 +601,8 @@ class URDFGenerator:
                             stl_coe_x = float(1)
                             stl_coe_y = float(1)
                             stl_coe_z = float(1)
-                            mirror_axis = str(df.iloc[i+17, 1])
-                            mirror_stl_axis = str(df.iloc[i+18, 1])
+                            mirror_axis = str(df.iloc[i+18, 1])
+                            mirror_stl_axis = str(df.iloc[i+19, 1])
                             if mirror_axis == 'X':
                                 coe_x = float(-1)
                             if mirror_axis == 'Y':
@@ -296,8 +633,6 @@ class URDFGenerator:
                                 f'{joint_index:02}'+"_"+str(link_name)
                             joint_trans = str(
                                 coe_x*float(df.iloc[i+7, 2]))+" "+str(coe_y*float(df.iloc[i+7, 3]))+" "+str(coe_z*float(df.iloc[i+7, 4]))
-                            r, p, y = self.mirror_euler(float(
-                                df.iloc[i+8, 2]), float(df.iloc[i+8, 3]), float(df.iloc[i+8, 4]), mirror_axis)
                             joint_rpy = str(df.iloc[i+8, 2])+" " + \
                                 str(df.iloc[i+8, 3]) + \
                                 " "+str(df.iloc[i+8, 4])
@@ -323,7 +658,10 @@ class URDFGenerator:
                                 joint_type = 'fixed'
                             link_mesh = "file://" + \
                                 self.mesh_folder+str(df.iloc[i+16, 1])
-
+                            collision_mesh = "file://" + \
+                                self.mesh_folder+str(df.iloc[i+17, 1])
+                            if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
+                                collision_mesh = ""
                             with open(self.link_template_file, 'r', encoding='utf-8') as file:
                                 text = file.read()
                                 text = text.replace(
@@ -339,8 +677,12 @@ class URDFGenerator:
                                 text = text.replace(
                                     'template_mesh_file', link_mesh)
                                 text = text.replace(
+                                    'template_collision_mesh_file', collision_mesh)
+                                text = text.replace(
                                     'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                                 text = text.replace('template_scale', str(
+                                    stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                text = text.replace('template_collision_scale', str(
                                     stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
                                 urdf_text = urdf_text.replace(
                                     '<!-- urdf auto generate tool -->', text)
@@ -393,6 +735,7 @@ class DataFileHandler(FileSystemEventHandler):
                 f"检测到robot_data.xlsx文件变化: {event.src_path}")
             self.node.urdf_generator.urdf_generator()
             self.node.update_robot_description()
+            self.node.xml_generator.xml_generator()
 
 
 class URDFGeneratorNode(Node):
@@ -419,9 +762,26 @@ class URDFGeneratorNode(Node):
         joint_template_file_path = package_share_directory + \
             "/templates/urdf/joint.template"
 
+        xml_output_file_path = output_folder_path+"/output.xml"
+        xml_template_file_path = package_share_directory + \
+            "/templates/xml/xml.template"
+        body_template_file_path = package_share_directory + \
+            "/templates/xml/body.template"
+        xml_joint_template_file_path = package_share_directory + \
+            "/templates/xml/joint.template"
+        asset_template_file_path = package_share_directory + \
+            "/templates/xml/asset.template"
+        visual_geom_template_file_path = package_share_directory + \
+            "/templates/xml/visual_geom.template"
+        collision_geom_template_file_path = package_share_directory + \
+            "/templates/xml/collision_geom.template"
+
         self.urdf_generator = URDFGenerator(data_file_path, mesh_folder_path, urdf_output_file_path,
                                             urdf_template_file_path, link_template_file_path, joint_template_file_path)
         self.urdf_generator.urdf_generator()
+        self.xml_generator = XMLGenerator(
+            xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path)
+        self.xml_generator.xml_generator()
 
         self.urdf_path = urdf_output_file_path
 

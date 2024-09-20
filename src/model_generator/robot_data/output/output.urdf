@@ -14,6 +14,12 @@
         <color rgba="0.8 0.4 0 1" />
       </material>
     </visual>
+    <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="file:///home/lizhen/works/open_source/robot_model_generator/src/model_generator/robot_data/meshes/body.STL" scale="1 1 1"/>
+          </geometry>
+    </collision>
 </link>
 
 <link name="left_hip_roll">
@@ -31,9 +37,15 @@
         <color rgba="1 0.4 0.4 1" />
       </material>
     </visual>
+    <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="" scale="1 1 1"/>
+          </geometry>
+    </collision>
 </link>
 
-<joint name="idx01_left_hip_roll" type="revolute">
+<joint name="idx01_left_hip_roll" type="prismatic">
     <origin xyz="-0.0808 0.105 -0.0652" rpy="0.7854 0 1.5708" />
     <parent link="base_link" />
     <child link="left_hip_roll" />
@@ -56,6 +68,12 @@
         <color rgba="1 1 0.4 1" />
       </material>
     </visual>
+    <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="" scale="1 1 1"/>
+          </geometry>
+    </collision>
 </link>
 
 <joint name="idx02_left_hip_yaw" type="revolute">
@@ -81,9 +99,15 @@
         <color rgba="1 0.4 0.4 1" />
       </material>
     </visual>
+    <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="" scale="-1.0 1.0 1.0"/>
+          </geometry>
+    </collision>
 </link>
 
-<joint name="idx03_right_hip_roll" type="revolute">
+<joint name="idx03_right_hip_roll" type="prismatic">
     <origin xyz="-0.0808 -0.105 -0.0652" rpy="0.7854 0 1.5708" />
     <parent link="base_link" />
     <child link="right_hip_roll" />
@@ -106,6 +130,12 @@
         <color rgba="1 1 0.4 1" />
       </material>
     </visual>
+    <collision>
+          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <geometry>
+            <mesh filename="" scale="1.0 -1.0 1.0"/>
+          </geometry>
+    </collision>
 </link>
 
 <joint name="idx04_right_hip_yaw" type="revolute">

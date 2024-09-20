@@ -1,0 +1,2 @@
+<mesh name = "template_mesh_name" file = "template_mesh_file_path" scale = 'template_mesh_scale' />
+        <!-- asset auto generate -->

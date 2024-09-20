@@ -1,0 +1,1 @@
+<joint name = 'template_joint_name' type = 'template_joint_type' axis = 'template_joint_axis' limited='template_joint_limit' range='template_joint_lower_limit template_joint_upper_limit' damping = '1' />

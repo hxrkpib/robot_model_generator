@@ -196,6 +196,12 @@ class XMLGenerator:
                             limit = 'true'
                         elif joint_type == 'ball':
                             limit = 'false'
+                        elif joint_type == 'urdf_fixed_xml_revolute':
+                            joint_type = 'hinge'
+                            limit = 'true'
+                        elif joint_type == 'urdf_fixed_xml_prismatic':
+                            joint_type = 'slide'
+                            limit = 'true'
                         link_mesh = str(df.iloc[i+16, 1])
                         collision_mesh = str(df.iloc[i+17, 1])
                         link_geom = ''
@@ -330,31 +336,25 @@ class XMLGenerator:
                             coe_x = float(1)
                             coe_y = float(1)
                             coe_z = float(1)
-                            stl_coe_x = float(1)
-                            stl_coe_y = float(1)
-                            stl_coe_z = float(1)
+                            coe_x = float(1)
+                            coe_y = float(1)
+                            coe_z = float(1)
                             mirror_axis = str(df.iloc[i+18, 1])
-                            mirror_stl_axis = str(df.iloc[i+19, 1])
+                            mirror_local_axis = str(df.iloc[i+19, 1])
                             if mirror_axis == 'X':
                                 coe_x = float(-1)
                             if mirror_axis == 'Y':
                                 coe_y = float(-1)
                             if mirror_axis == 'Z':
                                 coe_z = float(-1)
-                            if mirror_stl_axis == 'X':
-                                stl_coe_x = float(-1)
-                            if mirror_stl_axis == 'Y':
-                                stl_coe_y = float(-1)
-                            if mirror_stl_axis == 'Z':
-                                stl_coe_z = float(-1)
-                            com = str(stl_coe_x*float(df.iloc[i+2, 2]))+" " + \
-                                str(stl_coe_y*float(df.iloc[i+2, 3])
-                                    )+" "+str(stl_coe_z*float(df.iloc[i+2, 4]))
+                            com = str(coe_x*float(df.iloc[i+2, 2]))+" " + \
+                                str(coe_y*float(df.iloc[i+2, 3])
+                                    )+" "+str(coe_z*float(df.iloc[i+2, 4]))
                             mass = str(df.iloc[i+3, 2])
                             inertia = str(df.iloc[i+4, 2])+' '+str(df.iloc[i+5, 3])+' '+str(df.iloc[i+6, 4])+' '+str(
-                                stl_coe_x*stl_coe_y *
-                                float(df.iloc[i+4, 3]))+' '+str(stl_coe_x*stl_coe_z *
-                                                                float(df.iloc[i+4, 4]))+' '+str(stl_coe_y*stl_coe_z *
+                                coe_x*coe_y *
+                                float(df.iloc[i+4, 3]))+' '+str(coe_x*coe_z *
+                                                                float(df.iloc[i+4, 4]))+' '+str(coe_y*coe_z *
                                                                                                 float(df.iloc[i+5, 4]))
                             # joint
                             joint_name = "idx" + \
@@ -368,9 +368,11 @@ class XMLGenerator:
                                 df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
                             joint_lower_limit = str(df.iloc[i+10, 2])
                             joint_upper_limit = str(df.iloc[i+11, 2])
-                            if mirror_axis == 'Z':
-                                joint_lower_limit = -str(df.iloc[i+11, 2])
-                                joint_upper_limit = -str(df.iloc[i+10, 2])
+                            if mirror_local_axis == 'Y':
+                                joint_lower_limit = str(
+                                    -float(df.iloc[i+11, 2]))
+                                joint_upper_limit = str(
+                                    -float(df.iloc[i+10, 2]))
                             joint_velocity = str(df.iloc[i+12, 2])
                             joint_effort = str(df.iloc[i+13, 2])
                             parent_link = str(df.iloc[i+14, 1])
@@ -396,6 +398,12 @@ class XMLGenerator:
                             elif joint_type == 'ball':
                                 joint_type = 'slide'
                                 limit = 'false'
+                            elif joint_type == 'urdf_fixed_xml_revolute':
+                                joint_type = 'hinge'
+                                limit = 'true'
+                            elif joint_type == 'urdf_fixed_xml_prismatic':
+                                joint_type = 'slide'
+                                limit = 'true'
                             link_mesh = str(df.iloc[i+16, 1])
                             collision_mesh = str(df.iloc[i+17, 1])
                             if ':' in link_mesh:
@@ -438,7 +446,7 @@ class XMLGenerator:
                                     asset_text = asset_text.replace(
                                         'template_mesh_file_path', link_mesh)
                                     asset_text = asset_text.replace(
-                                        'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                        'template_mesh_scale', str(coe_x)+" " + str(coe_y) + " "+str(coe_z))
                                     xml_text = xml_text.replace(
                                         '<!-- asset auto generate -->', asset_text)
                             if not ':' in collision_mesh:
@@ -450,7 +458,7 @@ class XMLGenerator:
                                         asset_text = asset_text.replace(
                                             'template_mesh_file_path', collision_mesh)
                                         asset_text = asset_text.replace(
-                                            'template_mesh_scale', str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z))
+                                            'template_mesh_scale', str(coe_x)+" " + str(coe_y) + " "+str(coe_z))
                                         xml_text = xml_text.replace(
                                             '<!-- asset auto generate -->', asset_text)
                             if not joint_type == 'fixed':
@@ -631,10 +639,14 @@ class URDFGenerator:
                         joint_effort = str(df.iloc[i+13, 2])
                         parent_link = str(df.iloc[i+14, 1])
                         child_link = link_name
+
                         joint_type = str(df.iloc[i+15, 1])
                         if joint_type == 'ball':
                             joint_type = 'fixed'
-
+                        elif joint_type == 'urdf_fixed_xml_revolute':
+                            joint_type = 'fixed'
+                        elif joint_type == 'urdf_fixed_xml_prismatic':
+                            joint_type = 'fixed'
                         link_mesh = ""
                         collision_mesh = ""
                         if ':' in str(df.iloc[i+16, 1]):
@@ -722,35 +734,29 @@ class URDFGenerator:
                             coe_x = float(1)
                             coe_y = float(1)
                             coe_z = float(1)
-                            stl_coe_x = float(1)
-                            stl_coe_y = float(1)
-                            stl_coe_z = float(1)
+                            coe_x = float(1)
+                            coe_y = float(1)
+                            coe_z = float(1)
                             mirror_axis = str(df.iloc[i+18, 1])
-                            mirror_stl_axis = str(df.iloc[i+19, 1])
+                            mirror_local_axis = str(df.iloc[i+19, 1])
                             if mirror_axis == 'X':
                                 coe_x = float(-1)
                             if mirror_axis == 'Y':
                                 coe_y = float(-1)
                             if mirror_axis == 'Z':
                                 coe_z = float(-1)
-                            if mirror_stl_axis == 'X':
-                                stl_coe_x = float(-1)
-                            if mirror_stl_axis == 'Y':
-                                stl_coe_y = float(-1)
-                            if mirror_stl_axis == 'Z':
-                                stl_coe_z = float(-1)
-                            com = str(stl_coe_x*float(df.iloc[i+2, 2]))+" " + \
-                                str(stl_coe_y*float(df.iloc[i+2, 3])
-                                    )+" "+str(stl_coe_z*float(df.iloc[i+2, 4]))
+                            com = str(coe_x*float(df.iloc[i+2, 2]))+" " + \
+                                str(coe_y*float(df.iloc[i+2, 3])
+                                    )+" "+str(coe_z*float(df.iloc[i+2, 4]))
                             mass = str(df.iloc[i+3, 2])
                             ixx = str(df.iloc[i+4, 2])
                             iyy = str(df.iloc[i+5, 3])
                             izz = str(df.iloc[i+6, 4])
-                            ixy = str(stl_coe_x*stl_coe_y *
+                            ixy = str(coe_x*coe_y *
                                       float(df.iloc[i+4, 3]))
-                            ixz = str(stl_coe_x*stl_coe_z *
+                            ixz = str(coe_x*coe_z *
                                       float(df.iloc[i+4, 4]))
-                            iyz = str(stl_coe_y*stl_coe_z *
+                            iyz = str(coe_y*coe_z *
                                       float(df.iloc[i+5, 4]))
                             # joint
                             joint_name = "idx" + \
@@ -764,9 +770,11 @@ class URDFGenerator:
                                 df.iloc[i+9, 2])+" "+str(df.iloc[i+9, 3])+" "+str(df.iloc[i+9, 4])
                             joint_lower_limit = str(df.iloc[i+10, 2])
                             joint_upper_limit = str(df.iloc[i+11, 2])
-                            if mirror_axis == 'Z':
-                                joint_lower_limit = -str(df.iloc[i+11, 2])
-                                joint_upper_limit = -str(df.iloc[i+10, 2])
+                            if mirror_local_axis == 'Y':
+                                joint_lower_limit = str(
+                                    -float(df.iloc[i+11, 2]))
+                                joint_upper_limit = str(
+                                    -float(df.iloc[i+10, 2]))
                             joint_velocity = str(df.iloc[i+12, 2])
                             joint_effort = str(df.iloc[i+13, 2])
                             parent_link = str(df.iloc[i+14, 1])
@@ -780,6 +788,10 @@ class URDFGenerator:
                             joint_type = str(df.iloc[i+15, 1])
                             if joint_type == 'ball':
                                 joint_type = 'fixed'
+                            elif joint_type == 'urdf_fixed_xml_revolute':
+                                joint_type = 'fixed'
+                            elif joint_type == 'urdf_fixed_xml_prismatic':
+                                joint_type = 'fixed'
                             link_mesh = ""
                             collision_mesh = ""
                             if ':' in str(df.iloc[i+16, 1]):
@@ -789,7 +801,7 @@ class URDFGenerator:
                                 else:
                                     link_mesh = f'<{parts[0]} size="{parts[1]}" />'
                             elif '.' in str(df.iloc[i+16, 1]):
-                                link_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+16, 1])}" scale="{str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z)}"/>'
+                                link_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+16, 1])}" scale="{str(coe_x)+" " + str(coe_y) + " "+str(coe_z)}"/>'
                             if ':' in str(df.iloc[i+17, 1]):
                                 parts = str(df.iloc[i+17, 1]).split(':', 1)
                                 if parts[0] == 'sphere':
@@ -797,7 +809,7 @@ class URDFGenerator:
                                 else:
                                     collision_mesh = f'<{parts[0]} size="{parts[1]}" />'
                             elif '.' in str(df.iloc[i+17, 1]):
-                                collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="{str(stl_coe_x)+" " + str(stl_coe_y) + " "+str(stl_coe_z)}"/>'
+                                collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="{str(coe_x)+" " + str(coe_y) + " "+str(coe_z)}"/>'
 
                             if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
                                 collision_mesh = '<mesh filename="" scale="1 1 1"/>'

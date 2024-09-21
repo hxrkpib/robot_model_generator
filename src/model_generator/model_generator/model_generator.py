@@ -19,7 +19,7 @@ link_color_list = ["1 0.4 0.4 1", "1 1 0.4 1",
 
 
 class XMLGenerator:
-    def __init__(self, output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path):
+    def __init__(self, output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path, site_template_file_path):
         self.xml_output_file = output_file_path
         self.data_excel_file_path = data_file_path
         self.mesh_folder = mesh_folder_path
@@ -31,6 +31,7 @@ class XMLGenerator:
         self.collision_geom_template_file = collision_geom_template_file_path
         self.actuator_template_file = actuator_template_file_path
         self.sensor_template_file = sensor_template_file_path
+        self.site_template_file = site_template_file_path
 
     def add_spaces_to_string(self, text, num_spaces):
         # 生成指定数量的空格
@@ -317,7 +318,23 @@ class XMLGenerator:
                                     'template_joint_name', joint_name)
                                 xml_text = xml_text.replace(
                                     '<!-- sensor auto generate -->', sensor_text)
-
+                    elif df.iloc[i, 0] == 'Site Name':
+                        joint_index = joint_index+1
+                        joint_color_index = joint_color_index+1
+                        # site
+                        joint_trans = str(
+                            df.iloc[i+2, 2])+" "+str(df.iloc[i+2, 3])+" "+str(df.iloc[i+2, 4])
+                        joint_rpy = str(df.iloc[i+3, 2])+" " + \
+                            str(df.iloc[i+3, 3])+" "+str(df.iloc[i+3, 4])
+                        parent_link = str(df.iloc[i+4, 1])
+                        with open(self.site_template_file, 'r', encoding='utf-8') as file:
+                            geom_text = file.read()
+                            geom_text = geom_text.replace(
+                                'template_site_xyz', joint_trans)
+                            geom_text = geom_text.replace(
+                                'template_site_rpy', joint_rpy)
+                            xml_text = xml_text.replace(
+                                f'<!-- {parent_link} site geom -->', geom_text)
                 # 处理镜像
                 is_mirror = str(df.iloc[0, 1])
                 mirror_name = str(df.iloc[1, 1])
@@ -333,9 +350,6 @@ class XMLGenerator:
                                 link_name = link_name.replace('left', 'right')
                             else:
                                 link_name = link_name.replace('right', 'left')
-                            coe_x = float(1)
-                            coe_y = float(1)
-                            coe_z = float(1)
                             coe_x = float(1)
                             coe_y = float(1)
                             coe_z = float(1)
@@ -515,7 +529,37 @@ class XMLGenerator:
                                         'template_joint_name', joint_name)
                                     xml_text = xml_text.replace(
                                         '<!-- sensor auto generate -->', sensor_text)
-
+                        elif df.iloc[i, 0] == 'Site Name':
+                            joint_index = joint_index+1
+                            joint_color_index = joint_color_index+1
+                            # site
+                            mirror_axis = str(df.iloc[i+5, 1])
+                            if mirror_axis == 'X':
+                                coe_x = float(-1)
+                            if mirror_axis == 'Y':
+                                coe_y = float(-1)
+                            if mirror_axis == 'Z':
+                                coe_z = float(-1)
+                            joint_trans = str(
+                                coe_x*float(df.iloc[i+2, 2]))+" "+str(coe_y*float(df.iloc[i+2, 3]))+" "+str(coe_z*float(df.iloc[i+2, 4]))
+                            joint_rpy = str(-coe_x*float(df.iloc[i+3, 2]))+" " + \
+                                str(-coe_y*float(df.iloc[i+3, 3])) + \
+                                " "+str(-coe_z*float(df.iloc[i+3, 4]))
+                            parent_link = str(df.iloc[i+4, 1])
+                            if mirror_name == "left":
+                                parent_link = parent_link.replace(
+                                    'left', 'right')
+                            else:
+                                parent_link = parent_link.replace(
+                                    'right', 'left')
+                            with open(self.site_template_file, 'r', encoding='utf-8') as file:
+                                geom_text = file.read()
+                                geom_text = geom_text.replace(
+                                    'template_site_xyz', joint_trans)
+                                geom_text = geom_text.replace(
+                                    'template_site_rpy', joint_rpy)
+                                xml_text = xml_text.replace(
+                                    f'<!-- {parent_link} site geom -->', geom_text)
         directory = os.path.dirname(self.xml_output_file)
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -524,13 +568,14 @@ class XMLGenerator:
 
 
 class URDFGenerator:
-    def __init__(self, data_file_path, mesh_folder_path, output_folder_path, urdf_template_file_path, link_template_file_path, joint_template_file_path):
+    def __init__(self, data_file_path, mesh_folder_path, output_folder_path, urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path):
         self.urdf_output_file = output_folder_path
         self.data_excel_file_path = data_file_path
         self.mesh_folder = mesh_folder_path
         self.urdf_template_file = urdf_template_file_path
         self.link_template_file = link_template_file_path
         self.joint_template_file = joint_template_file_path
+        self.site_template_file = site_template_file_path
 
     def urdf_generator(self):
         # 获取所有工作表名称
@@ -716,7 +761,36 @@ class URDFGenerator:
                             urdf_text = urdf_text.replace(
                                 '<!-- urdf auto generate tool -->', text)
                             # print(urdf_text)
-                # 处理镜像
+                    elif df.iloc[i, 0] == 'Site Name':
+                        joint_index = joint_index+1
+                        joint_color_index = joint_color_index+1
+                        # site
+                        site_name = str(df.iloc[i, 1])
+                        joint_name = "idx" + \
+                            f'{joint_index:02}'+"_"+str(site_name)
+                        joint_trans = str(
+                            df.iloc[i+2, 2])+" "+str(df.iloc[i+2, 3])+" "+str(df.iloc[i+2, 4])
+                        joint_rpy = str(df.iloc[i+3, 2])+" " + \
+                            str(df.iloc[i+3, 3])+" "+str(df.iloc[i+3, 4])
+                        parent_link = str(df.iloc[i+4, 1])
+                        with open(self.site_template_file, 'r', encoding='utf-8') as file:
+                            text = file.read()
+                            text = text.replace(
+                                'template_site_name', site_name)
+                            text = text.replace(
+                                'template_site_joint_name', joint_name)
+                            text = text.replace(
+                                'template_joint_xyz', joint_trans)
+                            text = text.replace(
+                                'template_joint_rpy', joint_rpy)
+                            text = text.replace(
+                                'template_parent_link', parent_link)
+                            text = text.replace(
+                                'template_child_link', site_name)
+                            urdf_text = urdf_text.replace(
+                                '<!-- urdf auto generate tool -->', text)
+
+                        # 处理镜像
                 is_mirror = str(df.iloc[0, 1])
                 mirror_name = str(df.iloc[1, 1])
                 if is_mirror == "Y":
@@ -731,9 +805,6 @@ class URDFGenerator:
                                 link_name = link_name.replace('left', 'right')
                             else:
                                 link_name = link_name.replace('right', 'left')
-                            coe_x = float(1)
-                            coe_y = float(1)
-                            coe_z = float(1)
                             coe_x = float(1)
                             coe_y = float(1)
                             coe_z = float(1)
@@ -861,7 +932,55 @@ class URDFGenerator:
                                 urdf_text = urdf_text.replace(
                                     '<!-- urdf auto generate tool -->', text)
                                 # print(urdf_text)
-
+                        elif df.iloc[i, 0] == 'Site Name':
+                            joint_index = joint_index+1
+                            joint_color_index = joint_color_index+1
+                            # site
+                            mirror_axis = str(df.iloc[i+5, 1])
+                            coe_x = float(1)
+                            coe_y = float(1)
+                            coe_z = float(1)
+                            if mirror_axis == 'X':
+                                coe_x = float(-1)
+                            if mirror_axis == 'Y':
+                                coe_y = float(-1)
+                            if mirror_axis == 'Z':
+                                coe_z = float(-1)
+                            site_name = str(df.iloc[i, 1])
+                            if mirror_name == "left":
+                                site_name = site_name.replace('left', 'right')
+                            else:
+                                site_name = site_name.replace('right', 'left')
+                            joint_name = "idx" + \
+                                f'{joint_index:02}'+"_"+str(site_name)
+                            joint_trans = str(
+                                coe_x*float(df.iloc[i+2, 2]))+" "+str(coe_y*float(df.iloc[i+2, 3]))+" "+str(coe_z*float(df.iloc[i+2, 4]))
+                            joint_rpy = str(-coe_x*float(df.iloc[i+3, 2]))+" " + \
+                                str(-coe_y*float(df.iloc[i+3, 3])) + \
+                                " "+str(-coe_z*float(df.iloc[i+3, 4]))
+                            parent_link = str(df.iloc[i+4, 1])
+                            if mirror_name == "left":
+                                parent_link = parent_link.replace(
+                                    'left', 'right')
+                            else:
+                                parent_link = parent_link.replace(
+                                    'right', 'left')
+                            with open(self.site_template_file, 'r', encoding='utf-8') as file:
+                                text = file.read()
+                                text = text.replace(
+                                    'template_site_name', site_name)
+                                text = text.replace(
+                                    'template_site_joint_name', joint_name)
+                                text = text.replace(
+                                    'template_joint_xyz', joint_trans)
+                                text = text.replace(
+                                    'template_joint_rpy', joint_rpy)
+                                text = text.replace(
+                                    'template_parent_link', parent_link)
+                                text = text.replace(
+                                    'template_child_link', site_name)
+                                urdf_text = urdf_text.replace(
+                                    '<!-- urdf auto generate tool -->', text)
         # print(urdf_text)
         directory = os.path.dirname(self.urdf_output_file)
         if not os.path.exists(directory):
@@ -908,6 +1027,8 @@ class URDFGeneratorNode(Node):
             "/templates/urdf/link.template"
         joint_template_file_path = package_share_directory + \
             "/templates/urdf/joint.template"
+        site_template_file_path = package_share_directory + \
+            "/templates/urdf/site.template"
 
         xml_output_file_path = output_folder_path+"/output.xml"
         xml_template_file_path = package_share_directory + \
@@ -926,12 +1047,14 @@ class URDFGeneratorNode(Node):
             "/templates/xml/actuator.template"
         sensor_template_file_path = package_share_directory + \
             "/templates/xml/sensor.template"
+        xml_site_template_file_path = package_share_directory + \
+            "/templates/xml/site_geom.template"
 
         self.urdf_generator = URDFGenerator(data_file_path, mesh_folder_path, urdf_output_file_path,
-                                            urdf_template_file_path, link_template_file_path, joint_template_file_path)
+                                            urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path)
         self.urdf_generator.urdf_generator()
         self.xml_generator = XMLGenerator(
-            xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path)
+            xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path, xml_site_template_file_path)
         self.xml_generator.xml_generator()
 
         self.urdf_path = urdf_output_file_path

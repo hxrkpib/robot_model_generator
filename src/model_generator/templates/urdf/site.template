@@ -1,0 +1,19 @@
+<link name = "template_site_name">
+  <visual>
+      <origin rpy = "0 0 0" xyz = "0 0 0" />
+      <geometry>
+        <sphere radius = "0.02" />
+      </geometry>
+      <material name = "">
+        <color rgba = "1 0 0 1" />
+        <texture filename = "" />
+      </material>
+  </visual>
+</link>  
+<joint name="template_site_joint_name" type="fixed">
+  <origin xyz="template_joint_xyz" rpy="template_joint_rpy"/>
+  <parent link="template_parent_link"/>
+  <child link="template_child_link"/>
+</joint>
+
+<!-- urdf auto generate tool -->

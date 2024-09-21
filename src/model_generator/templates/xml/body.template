@@ -4,6 +4,7 @@
     <!-- template_body_name joint -->
     <!-- template_body_name visual geom -->
     <!-- template_body_name collision geom -->
+    <!-- template_body_name site geom -->
     <!-- template_body_name child body -->
 </body>
 <!-- template_parent_body_name child body -->

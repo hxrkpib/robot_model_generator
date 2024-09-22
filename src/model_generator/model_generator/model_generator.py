@@ -568,7 +568,7 @@ class XMLGenerator:
 
 
 class URDFGenerator:
-    def __init__(self, data_file_path, mesh_folder_path, output_folder_path, urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path):
+    def __init__(self, data_file_path, mesh_folder_path, output_folder_path, urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path, collision_template_file_path):
         self.urdf_output_file = output_folder_path
         self.data_excel_file_path = data_file_path
         self.mesh_folder = mesh_folder_path
@@ -576,6 +576,7 @@ class URDFGenerator:
         self.link_template_file = link_template_file_path
         self.joint_template_file = joint_template_file_path
         self.site_template_file = site_template_file_path
+        self.collision_template_file = collision_template_file_path
 
     def urdf_generator(self):
         # 获取所有工作表名称
@@ -622,7 +623,7 @@ class URDFGenerator:
                     collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[9, 1])}" scale="1 1 1"/>'
 
                 if str(df.iloc[9, 1]) == "" or str(df.iloc[9, 1]) == "nan" or str(df.iloc[9, 1]) == "-":
-                    collision_mesh = '<mesh filename="" scale="1 1 1"/>'
+                    collision_mesh = ''
                 with open(self.urdf_template_file, 'r', encoding='utf-8') as file:
                     urdf_text = file.read()
                     urdf_text = urdf_text.replace(
@@ -640,8 +641,13 @@ class URDFGenerator:
                     text = text.replace('template_ixz', ixz)
                     text = text.replace('template_iyz', iyz)
                     text = text.replace('template_visual_geometry', link_mesh)
-                    text = text.replace(
-                        'template_collision_geometry', collision_mesh)
+                    if not collision_mesh == '':
+                        with open(self.collision_template_file, 'r', encoding='utf-8') as collision_file:
+                            collsion_text = collision_file.read()
+                            collsion_text = collsion_text.replace(
+                                'template_collision_geometry', collision_mesh)
+                            text = text.replace(
+                                '<!-- template_collision_placeholder -->', collsion_text)
                     text = text.replace('template_mesh_color', base_color)
                 urdf_text = urdf_text.replace(
                     '<!-- urdf auto generate tool -->', text)
@@ -712,7 +718,7 @@ class URDFGenerator:
                             collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="1 1 1"/>'
 
                         if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
-                            collision_mesh = '<mesh filename="" scale="1 1 1"/>'
+                            collision_mesh = ''
                         with open(self.link_template_file, 'r', encoding='utf-8') as file:
                             text = file.read()
                             text = text.replace(
@@ -727,8 +733,13 @@ class URDFGenerator:
                             text = text.replace('template_iyz', iyz)
                             text = text.replace(
                                 'template_visual_geometry', link_mesh)
-                            text = text.replace(
-                                'template_collision_geometry', collision_mesh)
+                            if not collision_mesh == '':
+                                with open(self.collision_template_file, 'r', encoding='utf-8') as collision_file:
+                                    collsion_text = collision_file.read()
+                                    collsion_text = collsion_text.replace(
+                                        'template_collision_geometry', collision_mesh)
+                                    text = text.replace(
+                                        '<!-- template_collision_placeholder -->', collsion_text)
                             text = text.replace(
                                 'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                             urdf_text = urdf_text.replace(
@@ -883,7 +894,7 @@ class URDFGenerator:
                                 collision_mesh = f'<mesh filename="file://{self.mesh_folder+str(df.iloc[i+17, 1])}" scale="{str(coe_x)+" " + str(coe_y) + " "+str(coe_z)}"/>'
 
                             if str(df.iloc[i+17, 1]) == "" or str(df.iloc[i+17, 1]) == "nan" or str(df.iloc[i+17, 1]) == "-":
-                                collision_mesh = '<mesh filename="" scale="1 1 1"/>'
+                                collision_mesh = ''
                             with open(self.link_template_file, 'r', encoding='utf-8') as file:
                                 text = file.read()
                                 text = text.replace(
@@ -898,8 +909,13 @@ class URDFGenerator:
                                 text = text.replace('template_iyz', iyz)
                                 text = text.replace(
                                     'template_visual_geometry', link_mesh)
-                                text = text.replace(
-                                    'template_collision_geometry', collision_mesh)
+                                if not collision_mesh == '':
+                                    with open(self.collision_template_file, 'r', encoding='utf-8') as collision_file:
+                                        collsion_text = collision_file.read()
+                                        collsion_text = collsion_text.replace(
+                                            'template_collision_geometry', collision_mesh)
+                                        text = text.replace(
+                                            '<!-- template_collision_placeholder -->', collsion_text)
                                 text = text.replace(
                                     'template_mesh_color', link_color_list[joint_color_index % len(link_color_list) - 1])
                                 urdf_text = urdf_text.replace(
@@ -1029,6 +1045,8 @@ class URDFGeneratorNode(Node):
             "/templates/urdf/joint.template"
         site_template_file_path = package_share_directory + \
             "/templates/urdf/site.template"
+        urdf_collision_template_file_path = package_share_directory + \
+            "/templates/urdf/collision.template"
 
         xml_output_file_path = output_folder_path+"/output.xml"
         xml_template_file_path = package_share_directory + \
@@ -1051,7 +1069,7 @@ class URDFGeneratorNode(Node):
             "/templates/xml/site_geom.template"
 
         self.urdf_generator = URDFGenerator(data_file_path, mesh_folder_path, urdf_output_file_path,
-                                            urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path)
+                                            urdf_template_file_path, link_template_file_path, joint_template_file_path, site_template_file_path, urdf_collision_template_file_path)
         self.urdf_generator.urdf_generator()
         self.xml_generator = XMLGenerator(
             xml_output_file_path, data_file_path, mesh_folder_path, xml_template_file_path, body_template_file_path, xml_joint_template_file_path, asset_template_file_path, visual_geom_template_file_path, collision_geom_template_file_path, actuator_template_file_path, sensor_template_file_path, xml_site_template_file_path)

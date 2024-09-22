@@ -13,12 +13,7 @@
         <color rgba="template_mesh_color" />
       </material>
     </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        template_collision_geometry
-      </geometry>
-    </collision>
+    <!-- template_collision_placeholder -->
 </link>
 
 <!-- urdf auto generate tool -->
